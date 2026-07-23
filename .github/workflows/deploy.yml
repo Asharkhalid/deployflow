@@ -111,3 +111,6 @@ jobs:
             
             # Execute the orchestrator
             bash /home/${{ secrets.SERVER_USER }}/apps/sample-api/scripts/deploy.sh "$FULL_IMAGE_NAME"
+            
+            # Securely wipe the Docker credentials from the server
+            docker logout $REGISTRY
