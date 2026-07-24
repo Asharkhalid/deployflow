@@ -19,29 +19,29 @@ app.UseHttpsRedirection();
 
 app.MapHealthChecks("/health");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.MapGet("/", () => new {
+    Application = "DeployFlow Demo",
+    Version = Environment.GetEnvironmentVariable("APP_VERSION") ?? "1.0.0",
+    Commit = Environment.GetEnvironmentVariable("COMMIT_SHA") ?? "Local",
+    Environment = app.Environment.EnvironmentName,
+    Hostname = System.Net.Dns.GetHostName(),
+    Status = "Healthy"
+});
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+app.MapGet("/version", () => new {
+    Version = Environment.GetEnvironmentVariable("APP_VERSION") ?? "1.0.0",
+    Commit = Environment.GetEnvironmentVariable("COMMIT_SHA") ?? "Local",
+    Built = Environment.GetEnvironmentVariable("BUILD_DATE") ?? DateTime.UtcNow.ToString("O")
+});
+
+app.MapGet("/environment", () => new {
+    Environment = app.Environment.EnvironmentName,
+    Hostname = System.Net.Dns.GetHostName()
+});
+
+app.MapGet("/uptime", () => new {
+    Uptime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString("g")
+});
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

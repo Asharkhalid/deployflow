@@ -1,6 +1,11 @@
 # DeployFlow 🚀 
 **Zero-Downtime ASP.NET Core Deployment Framework**
 
+![Build Status](https://img.shields.io/github/actions/workflow/status/Asharkhalid/deployflow/deploy.yml?branch=main)
+![Docker Image Version (latest by date)](https://img.shields.io/github/v/tag/Asharkhalid/deployflow?label=version)
+![.NET Version](https://img.shields.io/badge/.NET-8.0-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 DeployFlow is a production-grade, zero-downtime deployment architecture designed for modern ASP.NET Core applications. It achieves seamless blue/green deployments, automatic failure recovery, and atomic traffic switching on virtual machines without the overhead of Kubernetes.
 
 ## 🏗️ Architecture Overview
@@ -44,6 +49,16 @@ sequenceDiagram
 *   `docker/`: Multi-stage, non-root `Dockerfile` and Nginx configuration templates.
 *   `scripts/`: Core DevOps bash scripts orchestrating the deployment lifecycle.
 *   `.github/workflows/`: CI/CD pipeline definition for automated releases.
+
+## 🌐 Live Demo & Endpoints
+
+This framework is actively deployed. You can verify the live, zero-downtime deployment metrics by hitting the following diagnostic endpoints:
+
+* **`GET /`** - Application Status Overview
+* **`GET /version`** - Returns the active Git Commit SHA, Version, and Build Date (proving code changes are live).
+* **`GET /health`** - Internal readiness probe endpoint (returns `200 OK` if healthy).
+* **`GET /environment`** - Returns the active ASP.NET environment and internal Docker container hostname.
+* **`GET /uptime`** - Returns the uptime of the currently active container.
 
 ## ⚙️ Initial Server Setup
 
