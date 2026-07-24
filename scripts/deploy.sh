@@ -18,6 +18,12 @@ echo "Starting deployment of $IMAGE_NAME"
 
 mkdir -p "$RELEASE_DIR"
 
+# Extract commit SHA from image tag
+TAG=${IMAGE_NAME##*:}
+COMMIT_SHA=${TAG#sha-}
+BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+APP_VERSION="1.0.${TIMESTAMP}"
+
 # Generate a random port between 10000 and 60000
 PORT=$(shuf -i 10000-60000 -n 1)
 CONTAINER_NAME="${APP_NAME}_${TIMESTAMP}"
@@ -31,6 +37,9 @@ docker run -d \
     --restart unless-stopped \
     -p 127.0.0.1:$PORT:8080 \
     -e ASPNETCORE_ENVIRONMENT=Production \
+    -e COMMIT_SHA="$COMMIT_SHA" \
+    -e APP_VERSION="$APP_VERSION" \
+    -e BUILD_DATE="$BUILD_DATE" \
     "$IMAGE_NAME"
 
 # Save metadata for later scripts
