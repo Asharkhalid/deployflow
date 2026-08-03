@@ -25,7 +25,7 @@ if [ "$COUNT" -gt "$KEEP_RELEASES" ]; then
         # Remove old containers if they still exist
         if [ -f "$DIR_TO_REMOVE/.container" ]; then
             OLD_CONTAINER=$(cat "$DIR_TO_REMOVE/.container")
-            docker rm "$OLD_CONTAINER" 2>/dev/null || true
+            docker rm -f "$OLD_CONTAINER" 2>/dev/null || true
         fi
         
         rm -rf "$DIR_TO_REMOVE"
