@@ -11,6 +11,7 @@ APP_NAME="sample-api"
 BASE_DIR="/home/deployer/apps/$APP_NAME"
 CURRENT_SYMLINK="$BASE_DIR/current"
 NGINX_UPSTREAM_FILE="/etc/nginx/conf.d/${APP_NAME}_upstream.conf"
+DRAIN_SECONDS=${DRAIN_SECONDS:-10}
 
 NEW_PORT=$(cat "$NEW_RELEASE_DIR/.port")
 NEW_CONTAINER=$(cat "$NEW_RELEASE_DIR/.container")
@@ -41,11 +42,15 @@ fi
 ln -sfn "$NEW_RELEASE_DIR" "$CURRENT_SYMLINK"
 echo "Symlink 'current' updated to $NEW_RELEASE_DIR"
 
-# Gracefully stop and remove the old container
+# Stop (but keep) the old container so rollback.sh can start it again.
+# cleanup.sh removes it once its release ages out of the retention window.
 if [ -n "$OLD_CONTAINER" ] && [ "$OLD_CONTAINER" != "$NEW_CONTAINER" ]; then
+    # Nginx workers from before the reload keep finishing in-flight requests
+    # against the old container; give them time before it goes away.
+    echo "Draining in-flight requests for ${DRAIN_SECONDS}s..."
+    sleep "$DRAIN_SECONDS"
     echo "Stopping previous container: $OLD_CONTAINER"
     docker stop "$OLD_CONTAINER" || true
-    docker rm "$OLD_CONTAINER" || true
 fi
 
 echo "Traffic switch successful!"

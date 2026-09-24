@@ -20,6 +20,13 @@ if [ "$COUNT" -gt "$KEEP_RELEASES" ]; then
     
     for (( i=0; i<REMOVE_COUNT; i++ )); do
         DIR_TO_REMOVE="${RELEASES[$i]}"
+
+        # Never remove the live release, whatever its position
+        if [ "$RELEASES_DIR/$DIR_TO_REMOVE" == "$(readlink -f "$BASE_DIR/current")" ]; then
+            echo "Skipping live release: $DIR_TO_REMOVE"
+            continue
+        fi
+
         echo "Removing release directory: $DIR_TO_REMOVE"
         
         # Remove old containers if they still exist

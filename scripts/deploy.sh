@@ -16,36 +16,24 @@ RELEASE_DIR="$RELEASES_DIR/$TIMESTAMP"
 
 echo "Starting deployment of $IMAGE_NAME"
 
-mkdir -p "$RELEASE_DIR"
-
-# Extract commit SHA from image tag
-TAG=${IMAGE_NAME##*:}
-COMMIT_SHA=${TAG#sha-}
-BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-APP_VERSION="1.0.${TIMESTAMP}"
-
-# Generate a random port between 10000 and 60000
-PORT=$(shuf -i 10000-60000 -n 1)
-CONTAINER_NAME="${APP_NAME}_${TIMESTAMP}"
-
+# Pull before creating the release folder, so a failed pull leaves nothing behind
 echo "Pulling image..."
-docker pull "$IMAGE_NAME"
+if ! docker pull "$IMAGE_NAME"; then
+    echo "Image pull failed. No release created. Traffic remains untouched."
+    exit 1
+fi
 
-echo "Starting new candidate container $CONTAINER_NAME on port $PORT..."
-docker run -d \
-    --name "$CONTAINER_NAME" \
-    --restart unless-stopped \
-    -p 127.0.0.1:$PORT:8080 \
-    -e ASPNETCORE_ENVIRONMENT=Production \
-    -e COMMIT_SHA="$COMMIT_SHA" \
-    -e APP_VERSION="$APP_VERSION" \
-    -e BUILD_DATE="$BUILD_DATE" \
-    "$IMAGE_NAME"
-
-# Save metadata for later scripts
-echo "$PORT" > "$RELEASE_DIR/.port"
-echo "$CONTAINER_NAME" > "$RELEASE_DIR/.container"
+mkdir -p "$RELEASE_DIR"
 echo "$IMAGE_NAME" > "$RELEASE_DIR/.image"
+
+# Starts the candidate on a free port and records .port, .container and .env
+if ! bash "$SCRIPTS_DIR/start-container.sh" "$RELEASE_DIR"; then
+    echo "Candidate container failed to start. Traffic remains untouched."
+    rm -rf "$RELEASE_DIR"
+    exit 1
+fi
+PORT=$(cat "$RELEASE_DIR/.port")
+CONTAINER_NAME=$(cat "$RELEASE_DIR/.container")
 
 echo "Candidate release started. Verifying application health..."
 

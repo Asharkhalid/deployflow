@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DeployFlow Case Study</title>
+<style>
+  :root{
+    --ink:#0f172a;
+    --ink-2:#334155;
+    --ink-3:#64748b;
+    --line:#e2e8f0;
+    --line-2:#cbd5e1;
+    --accent:#0d7d8c;
+    --accent-dk:#0a5a66;
+    --accent-bg:#eef8f9;
+    --navy:#12243d;
+    --amber:#9a5b06;
+    --amber-bg:#fdf6e7;
+    --mono:"Consolas","SF Mono",Menlo,monospace;
+    --sans:"Segoe UI",Inter,-apple-system,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{ size:A4; margin:0 }
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:var(--sans);color:var(--ink);font-size:10.2pt;line-height:1.5;background:#fff}
+
+  .page{
+    width:210mm;height:297mm;padding:16mm 17mm 14mm;
+    position:relative;overflow:hidden;
+    page-break-after:always;break-after:page;
+  }
+  .page:last-child{page-break-after:auto;break-after:auto}
+
+  /* ---------- shared type ---------- */
+  .kicker{font-size:7.6pt;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:25pt;line-height:1.12;letter-spacing:-.6px;font-weight:700}
+  h2{font-size:16.5pt;letter-spacing:-.2px;font-weight:700;color:var(--navy)}
+  h3{font-size:10.4pt;font-weight:700;color:var(--navy)}
+  p{margin-bottom:7pt}
+  .lead{font-size:11pt;color:var(--ink-2);line-height:1.55}
+  code,.mono{font-family:var(--mono);font-size:8.8pt;background:#f1f5f9;padding:1px 4px;border-radius:3px;color:var(--accent-dk)}
+  .rule{height:2.5px;width:52px;background:var(--accent);border-radius:2px;margin:9pt 0 11pt}
+
+  .phead{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid var(--line);padding-bottom:6pt;margin-bottom:13pt}
+  .phead .n{font-size:7.6pt;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+
+  .foot{position:absolute;left:17mm;right:17mm;bottom:8mm;
+    display:flex;justify-content:space-between;font-size:7.4pt;color:var(--ink-3);
+    border-top:1px solid var(--line);padding-top:4pt}
+
+  /* ---------- cover ---------- */
+  .cover{background:var(--navy);color:#fff;display:flex;flex-direction:column}
+  .cover .kicker{color:#5fd0dd}
+  .cover h1{color:#fff;margin-top:5mm;max-width:150mm}
+  .cover .sub{color:#a7bdd6;font-size:11.5pt;margin-top:6mm;max-width:150mm;line-height:1.55}
+  .badges{display:flex;flex-wrap:wrap;gap:5pt;margin-top:9mm}
+  .badge{border:1px solid #35507a;color:#cfe1f5;border-radius:20px;padding:3.5pt 9pt;font-size:8.2pt;font-weight:600}
+  /* cover pipeline strip */
+  .strip{margin-top:11mm;padding:8mm 0;border-top:1px solid #2a4166;border-bottom:1px solid #2a4166}
+  .glance{margin-top:9mm;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7mm}
+  .glance .h{font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;color:#5fd0dd;
+    font-weight:700;margin-bottom:3.5mm}
+  .glance p{font-size:9.2pt;color:#a7bdd6;line-height:1.55;margin:0}
+  .glance li{font-size:9.2pt;color:#a7bdd6;margin-bottom:2.5pt;padding-left:10pt}
+  .glance li:before{background:#0d7d8c;top:5pt}
+  .strip .lbl{font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;color:#7e97b8;margin-bottom:5mm}
+  .flow{display:flex;align-items:center;flex-wrap:wrap;gap:0}
+  .chip{border:1px solid #35507a;background:#182f4d;border-radius:4px;padding:4pt 7.5pt;
+    font-size:8.4pt;font-weight:600;color:#dce8f7;white-space:nowrap}
+  .chip.on{background:#0d7d8c;border-color:#12a3b5;color:#fff}
+  .sep{color:#4a6b9a;font-size:9pt;padding:0 4.5pt}
+  .cover-stmt{margin-top:8mm;font-size:9.6pt;color:#a7bdd6;line-height:1.6;max-width:158mm}
+  .cover-stmt b{color:#5fd0dd;font-weight:600}
+  .cover-facts{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #2a4166;padding-top:7mm}
+  .cover-facts div{padding-right:5mm}
+  .cover-facts .v{font-size:15pt;font-weight:700;color:#5fd0dd;letter-spacing:-.3px}
+  .cover-facts .l{font-size:7.6pt;color:#8ea8c7;text-transform:uppercase;letter-spacing:.1em;margin-top:2pt;line-height:1.35}
+  .cover-meta{margin-top:7mm;font-size:8.4pt;color:#7e97b8}
+
+  /* ---------- blocks ---------- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+  .card{border:1px solid var(--line);border-radius:6px;padding:8pt 10pt;background:#fcfdfe}
+  .card h3{margin-bottom:3.5pt}
+  .card p{font-size:9.4pt;color:var(--ink-2);margin:0}
+
+  .pain{border-left:3px solid var(--accent);background:var(--accent-bg);
+    border-radius:0 5px 5px 0;padding:8pt 11pt;margin-bottom:6pt}
+  .pain h3{margin-bottom:2.5pt}
+  .pain p{font-size:9.4pt;color:var(--ink-2);margin:0}
+
+  .callout{border:1px solid var(--line-2);border-left:3px solid var(--amber);
+    background:var(--amber-bg);border-radius:0 5px 5px 0;padding:8pt 11pt}
+  .callout h3{color:var(--amber);font-size:9.4pt;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3pt}
+  .callout p{font-size:9.4pt;color:#5c4409;margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:9.3pt}
+  th{text-align:left;font-size:7.6pt;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);
+     border-bottom:1.5px solid var(--line-2);padding:0 6pt 4pt 0;font-weight:700}
+  td{padding:4.6pt 6pt 4.6pt 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+  td:first-child{color:var(--ink);font-weight:600;white-space:nowrap}
+
+  ul{list-style:none}
+  li{position:relative;padding-left:12pt;margin-bottom:4pt;font-size:9.4pt;color:var(--ink-2)}
+  li:before{content:"";position:absolute;left:1pt;top:5.2pt;width:4px;height:4px;
+    border-radius:50%;background:var(--accent)}
+  li.x:before{background:#c2410c}
+
+  /* ---------- architecture chain ---------- */
+  .arch{display:grid;grid-template-columns:60mm 1fr;gap:7mm;align-items:start}
+  .chain{display:flex;flex-direction:column;align-items:stretch}
+  .node{border:1.5px solid var(--line-2);border-radius:5px;background:#fff;
+    padding:5.5pt 8pt;text-align:center}
+  .node .t{font-weight:700;font-size:9.6pt;color:var(--navy);line-height:1.25}
+  .node .s{font-family:var(--mono);font-size:7.4pt;color:var(--ink-3);margin-top:1pt}
+  .node.hi{background:var(--navy);border-color:var(--navy)}
+  .node.hi .t{color:#fff}.node.hi .s{color:#8ea8c7}
+  .node.ac{background:var(--accent-bg);border-color:var(--accent)}
+  .node.ac .t{color:var(--accent-dk)}
+  .arrow{height:12pt;position:relative}
+  .arrow:before{content:"";position:absolute;left:50%;top:0;bottom:3px;width:1.5px;
+    background:var(--line-2);transform:translateX(-50%)}
+  .arrow:after{content:"";position:absolute;left:50%;bottom:0;
+    border-left:3.5px solid transparent;border-right:3.5px solid transparent;
+    border-top:5px solid var(--line-2);transform:translateX(-50%)}
+  .notes .row{display:grid;grid-template-columns:26mm 1fr;gap:4mm;
+    padding:4.6pt 0;border-bottom:1px solid var(--line);font-size:9pt}
+  .notes .row:last-child{border-bottom:none}
+  .notes .k{font-weight:700;color:var(--navy);font-size:8.8pt}
+  .notes .d{color:var(--ink-2);line-height:1.42}
+
+  /* ---------- workflow stages ---------- */
+  .stage{display:grid;grid-template-columns:9mm 1fr;gap:4mm;margin-bottom:7.5pt}
+  .stage .num{width:9mm;height:9mm;border-radius:50%;background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10pt}
+  .stage h3{margin-bottom:2.5pt}
+  .stage p{font-size:9.3pt;color:var(--ink-2);margin:0}
+  .stage .where{font-family:var(--mono);font-size:7.6pt;color:var(--accent-dk);
+    background:var(--accent-bg);border-radius:3px;padding:1px 5px;margin-left:5pt;white-space:nowrap}
+
+  pre{font-family:var(--mono);font-size:8.1pt;line-height:1.5;background:#f7f9fb;
+    border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:0 5px 5px 0;padding:7pt 9pt;color:var(--ink-2);white-space:pre;overflow:hidden}
+  pre .c{color:#7c8ea3}
+  pre b{color:var(--navy)}
+
+  .tree{font-family:var(--mono);font-size:8.4pt;line-height:1.62;color:var(--ink-2)}
+  .tree b{color:var(--navy)}
+  .tree .cur{color:var(--accent-dk);font-weight:700}
+
+  /* ---------- results ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:3.5mm;margin-bottom:4mm}
+  .kpi{border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:5px;
+    padding:7pt 8.5pt;background:#fcfdfe}
+  .kpi .v{font-size:15.5pt;font-weight:700;color:var(--navy);letter-spacing:-.5px;line-height:1}
+  .kpi .l{font-size:8.2pt;color:var(--ink-3);margin-top:3pt;line-height:1.35}
+
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);
+    border-radius:6px;overflow:hidden;flex:none}
+  .ba>div{padding:8pt 11pt}
+  .ba .before{background:#fbfbfc;border-right:1px solid var(--line)}
+  .ba h3{font-size:8.4pt;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5pt}
+  .ba .before h3{color:#9a3412}
+  .ba .after h3{color:var(--accent)}
+  .ba li{font-size:9pt;margin-bottom:3pt}
+
+  .page-flex>*{flex:none}
+  .cta{background:var(--navy);color:#fff;border-radius:6px;padding:10pt 12pt;margin-top:auto}
+  .cta h3{color:#5fd0dd;font-size:9pt;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4pt}
+  .cta p{color:#c3d5ea;font-size:9.3pt;margin:0}
+  .cta .m{font-family:var(--mono);color:#fff;font-size:8.6pt;background:transparent;padding:0}
+</style>
+</head>
+<body>
+
+<!-- ============ COVER / PAGE 1 top ============ -->
+<section class="page cover">
+  <div class="kicker">DevOps Case Study &middot; Personal reference implementation</div>
+  <h1>DeployFlow: Blue-Green Deployment for ASP.NET Core on a Single VPS</h1>
+  <div class="sub">For small teams running a .NET API on one server: a repeatable,
+    health-verified release pipeline on a single Ubuntu VM &mdash; with versioned
+    releases, controlled traffic switching through Nginx, and a one-command rollback path.</div>
+
+  <div class="badges">
+    <span class="badge">GitHub Actions</span>
+    <span class="badge">Docker</span>
+    <span class="badge">GHCR</span>
+    <span class="badge">Ubuntu / Linux</span>
+    <span class="badge">Nginx</span>
+    <span class="badge">Bash</span>
+    <span class="badge">ASP.NET Core 8</span>
+    <span class="badge">SSH / SCP</span>
+  </div>
+
+  <div class="strip">
+    <div class="lbl">The delivery path</div>
+    <div class="flow">
+      <span class="chip">GitHub</span><span class="sep">&rarr;</span>
+      <span class="chip">GitHub Actions</span><span class="sep">&rarr;</span>
+      <span class="chip">GHCR</span><span class="sep">&rarr;</span>
+      <span class="chip">SSH</span><span class="sep">&rarr;</span>
+      <span class="chip">Ubuntu</span><span class="sep">&rarr;</span>
+      <span class="chip">Docker</span><span class="sep">&rarr;</span>
+      <span class="chip on">Nginx</span><span class="sep">&rarr;</span>
+      <span class="chip">Application</span>
+    </div>
+    <div class="cover-stmt">
+      A push to <b>main</b> builds and tests the application, publishes a commit-tagged image to the
+      registry, and deploys it to the server as a candidate container. Traffic only moves once that
+      candidate answers a health check &mdash; and the release it replaced stays on disk, ready to be
+      restored by one command.
+    </div>
+  </div>
+
+  <div class="glance">
+    <div>
+      <div class="h">Objective</div>
+      <p>Replace the common manual, SSH-driven release with an automated pipeline that verifies each version
+        before it serves traffic and can be reversed on demand.</p>
+    </div>
+    <div>
+      <div class="h">Environment</div>
+      <ul>
+        <li>One Ubuntu VM</li>
+        <li>Docker, non-root containers</li>
+        <li>Nginx reverse proxy</li>
+        <li>GHCR image registry</li>
+        <li>No orchestrator, no added services</li>
+      </ul>
+    </div>
+    <div>
+      <div class="h">Built</div>
+      <ul>
+        <li>Two-job CI/CD workflow</li>
+        <li>Six deployment scripts</li>
+        <li>Health-gated traffic switch</li>
+        <li>Single-command rollback</li>
+        <li>Automatic release retention</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cover-facts">
+    <div><div class="v">1 push</div><div class="l">Triggers build, test, publish &amp; deploy</div></div>
+    <div><div class="v">SHA&#8209;tagged</div><div class="l">Every image traceable to a commit</div></div>
+    <div><div class="v">3</div><div class="l">Releases retained on disk for rollback</div></div>
+    <div><div class="v">1 command</div><div class="l">Revert to the previous release</div></div>
+  </div>
+
+  <div class="cover-meta">
+    Live demo: deployflow.inventstarts.com/version &middot; github.com/Asharkhalid/deployflow &middot; Personal project
+  </div>
+</section>
+
+<!-- ============ PAGE 2 — PROBLEM ============ -->
+<section class="page">
+  <div class="phead"><h2>The Problem</h2><div class="n">01 &mdash; The typical setup this replaces</div></div>
+
+  <p class="lead">Many small teams run a containerised .NET API on a single VPS and release it
+    by hand over SSH: pull the code, rebuild the image, stop the running container, start the
+    new one, then hope it comes up. That process is fast to start with and expensive to live with.
+    DeployFlow is a personal reference implementation built to show how to replace it.</p>
+  <div class="rule"></div>
+
+  <div class="pain">
+    <h3>Manual deployment is the only path to production</h3>
+    <p>Each release depends on a person typing the right sequence of Docker commands in the right
+      order on the right server. Steps are remembered rather than recorded, so the deployment
+      procedure lives in one engineer's head &mdash; and cannot be handed over, audited, or run twice identically.</p>
+  </div>
+
+  <div class="pain">
+    <h3>Releases are not repeatable or traceable</h3>
+    <p>Images are built on the server from whatever the working tree happens to contain.
+      Nothing ties a running container back to a specific commit, so the question
+      <em>&ldquo;which code is live right now?&rdquo;</em> has no reliable answer.</p>
+  </div>
+
+  <div class="pain">
+    <h3>No verification before traffic is switched</h3>
+    <p>The old container is stopped before the new one has proven it can serve requests.
+      A bad build, a missing environment variable, or a start-up exception becomes a live
+      outage, discovered by a user or by someone checking the logs.</p>
+  </div>
+
+  <div class="pain">
+    <h3>No way back</h3>
+    <p>Once the previous container is removed, recovery means rebuilding the old code from
+      scratch under pressure. There is no known-good artefact standing by, and no defined rollback procedure.</p>
+  </div>
+
+  <div class="pain">
+    <h3>Kubernetes is the wrong size for the problem</h3>
+    <p>A managed orchestrator solves this, but for one API on one VM it adds a control plane,
+      a cost line, and an operational skill set out of proportion to the workload.</p>
+  </div>
+
+  <h3 style="margin-top:9pt">What the solution had to deliver</h3>
+  <ul style="margin-top:4pt;columns:2;column-gap:8mm">
+    <li>Deployment triggered by <code>git push</code>, with no manual server steps</li>
+    <li>Every artefact tagged with its Git commit SHA</li>
+    <li>The new version proven healthy <em>before</em> it receives traffic</li>
+    <li>A failed release must leave the running version untouched</li>
+    <li>Previous releases kept on disk, ready to be restored</li>
+    <li>Rollback as a single, scripted command</li>
+    <li>No orchestrator, no extra managed infrastructure</li>
+    <li>Registry credentials never persisted on the server</li>
+  </ul>
+
+  <div class="foot"><span>DeployFlow &mdash; Case Study</span><span>Page 1</span></div>
+</section>
+
+<!-- ============ PAGE 3 — ARCHITECTURE ============ -->
+<section class="page">
+  <div class="phead"><h2>Architecture</h2><div class="n">02 &mdash; How it fits together</div></div>
+
+  <p class="lead" style="margin-bottom:9pt">One path from commit to served request. CI builds and
+    publishes the artefact; the server pulls it and decides whether it earns traffic.</p>
+
+  <div class="arch">
+    <div class="chain">
+      <div class="node hi"><div class="t">GitHub</div><div class="s">push &rarr; main</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="t">GitHub Actions</div><div class="s">build &middot; test &middot; publish</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="t">GHCR</div><div class="s">ghcr.io &middot; tag sha-&lt;short&gt;</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="t">SSH</div><div class="s">scp scripts + remote exec</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="t">Ubuntu Server</div><div class="s">releases/ &middot; current &rarr;</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="t">Docker</div><div class="s">127.0.0.1:&lt;port&gt; &rarr; 8080</div></div>
+      <div class="arrow"></div>
+      <div class="node ac"><div class="t">Nginx</div><div class="s">upstream &middot; reverse proxy</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="t">Application</div><div class="s">ASP.NET Core 8</div></div>
+    </div>
+
+    <div class="notes">
+      <div class="row"><div class="k">GitHub</div><div class="d">Single trigger: a push to <code>main</code>. The repository is the only
+        place a release starts, so the pipeline is the audit trail.</div></div>
+      <div class="row"><div class="k">GitHub Actions</div><div class="d">Restores, builds and runs tests on .NET 8, then builds the
+        image from a multi-stage Dockerfile. A failing test stops the run before anything is published.</div></div>
+      <div class="row"><div class="k">GHCR</div><div class="d">The image is pushed to GitHub Container Registry tagged
+        <code>sha-&lt;short-sha&gt;</code> and <code>latest</code>. The SHA tag is what gets deployed &mdash; so the
+        running container maps back to an exact commit.</div></div>
+      <div class="row"><div class="k">SSH</div><div class="d">The deploy job copies the <code>scripts/</code> directory to the server
+        via SCP, then executes the orchestrator over SSH using key-based auth. Registry login uses a
+        token passed in at run time and is wiped with <code>docker logout</code> when the run ends.</div></div>
+      <div class="row"><div class="k">Ubuntu</div><div class="d">A Capistrano-style layout: each deploy gets its own timestamped
+        directory under <code>releases/</code>, and a <code>current</code> symlink names the active one.
+        Release metadata (port, container, image) is written to disk so later scripts are stateless.</div></div>
+      <div class="row"><div class="k">Docker</div><div class="d">The new version starts as a <em>candidate</em> container on a random
+        high port bound to <code>127.0.0.1</code> only &mdash; reachable for health checks, never from the
+        internet. Runs as a non-root user with <code>--restart unless-stopped</code>.</div></div>
+      <div class="row"><div class="k">Nginx</div><div class="d">The single public entry point, serving HTTPS with a Let's Encrypt certificate and redirecting HTTP to it. Its
+        <code>upstream</code> block lives in one generated include file; rewriting that file and reloading
+        Nginx is the only action that moves traffic between versions.</div></div>
+      <div class="row"><div class="k">Application</div><div class="d">Exposes <code>/health</code> as the readiness gate, plus
+        <code>/version</code>, <code>/environment</code> and <code>/uptime</code> so the live deployment can be
+        verified from outside.</div></div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:10pt">
+    <h3>Design decision</h3>
+    <p>Nothing is built on the production server and no source is copied there &mdash; only signed-in
+      image pulls and small Bash scripts. The server's job is to run a verified artefact and route
+      traffic to it, which keeps its state minimal and its failure modes few.</p>
+  </div>
+
+  <div class="foot"><span>DeployFlow &mdash; Case Study</span><span>Page 2</span></div>
+</section>
+
+<!-- ============ PAGE 4 — DEPLOYMENT WORKFLOW ============ -->
+<section class="page">
+  <div class="phead"><h2>Deployment Workflow</h2><div class="n">03 &mdash; Build &rarr; Publish &rarr; Deploy &rarr; Verify</div></div>
+
+  <div class="stage">
+    <div class="num">1</div>
+    <div><h3>Build <span class="where">GitHub Actions runner</span></h3>
+      <p>Checkout, set up .NET 8, <code>dotnet restore</code>, <code>dotnet build -c Release</code>, then
+        <code>dotnet test</code>. Tests run against the release build, so the same configuration that ships
+        is the one that was verified. The image is then built from a multi-stage Dockerfile: SDK image
+        compiles and publishes, and only the published output is copied into a slim
+        <code>aspnet:8.0-alpine</code> runtime layer that runs as a non-root user.</p></div>
+  </div>
+
+  <div class="stage">
+    <div class="num">2</div>
+    <div><h3>Publish <span class="where">GHCR</span></h3>
+      <p>Login uses the workflow's scoped <code>GITHUB_TOKEN</code> with
+        <code>packages: write</code>. Tags are generated from the commit
+        (<code>type=sha</code>) alongside <code>latest</code>, and the image is pushed to
+        <code>ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sample-api</code>. From here on, the release is an
+        immutable artefact identified by its commit &mdash; not a build recipe.</p></div>
+  </div>
+
+  <div class="stage">
+    <div class="num">3</div>
+    <div><h3>Deploy <span class="where">SSH &rarr; Ubuntu</span></h3>
+      <p>A second job (gated on a successful build) sparse-checks-out only <code>scripts/</code>,
+        SCPs it to the app directory, and runs <code>deploy.sh</code> over SSH with the fully qualified
+        image reference. On the server the script creates a timestamped release directory, pulls the
+        image, and starts a candidate container on a random loopback-bound port &mdash; recording its
+        port, container name and image tag inside the release directory. The currently live container
+        keeps serving throughout.</p></div>
+  </div>
+
+  <div class="stage">
+    <div class="num">4</div>
+    <div><h3>Verify <span class="where">health-check.sh</span></h3>
+      <p><code>health-check.sh</code> polls <code>http://127.0.0.1:&lt;port&gt;/health</code> with
+        <code>curl -f</code>, up to 10 attempts at 3-second intervals, giving a start-up window of roughly
+        30 seconds. Only a <code>200 OK</code> allows the release to continue. If the window expires, the
+        candidate container is stopped and removed, its release directory is deleted, and the job exits
+        non-zero &mdash; a red build instead of a broken site.</p></div>
+  </div>
+
+  <div class="stage">
+    <div class="num">5</div>
+    <div><h3>Release management <span class="where">switch-release.sh &middot; cleanup.sh</span></h3>
+      <p>Once healthy, the Nginx upstream include is rewritten to the candidate's port,
+        <code>nginx -t</code> validates the configuration, and <code>nginx -s reload</code> applies it.
+        The <code>current</code> symlink is repointed atomically with <code>ln -sfn</code>. After a
+        10-second drain for in-flight requests, the previous container is stopped but kept for rollback,
+        and <code>cleanup.sh</code> trims the release history to the three most recent, removing their
+        containers and pruning dangling images to reclaim disk.</p></div>
+  </div>
+
+  <pre><span class="c"># .github/workflows/deploy.yml — the deploy job, in essence</span>
+scp   scripts/            &rarr; ~/apps/sample-api/scripts/
+ssh   docker login ghcr.io -u $ACTOR --password-stdin
+      IMAGE=ghcr.io/$OWNER/$REPO/sample-api:<b>sha-${SHA:0:7}</b>
+      bash ~/apps/sample-api/scripts/<b>deploy.sh</b> "$IMAGE"
+      docker logout ghcr.io          <span class="c"># credentials never left behind</span></pre>
+
+  <div class="foot"><span>DeployFlow &mdash; Case Study</span><span>Page 3</span></div>
+</section>
+
+<!-- ============ PAGE 5 — RELIABILITY ============ -->
+<section class="page">
+  <div class="phead"><h2>Reliability &amp; Rollback</h2><div class="n">04 &mdash; What happens when it goes wrong</div></div>
+
+  <p class="lead" style="margin-bottom:10pt">Four mechanisms carry the reliability story: a health gate
+    before traffic moves, immutable release directories, a symlink that names the active release, and a
+    retained previous release to fall back to.</p>
+
+  <div class="grid2" style="margin-bottom:8pt">
+    <div class="card">
+      <h3>Health verification is the gate</h3>
+      <p>The candidate is only reachable on loopback until it passes. The switch step is never
+        reached on a failed check &mdash; the deploy aborts with the live version still serving. Failure
+        surfaces as a failed pipeline run, not as user-visible errors.</p>
+    </div>
+    <div class="card">
+      <h3>Release directories are immutable</h3>
+      <p>Each deploy writes a fresh <code>releases/&lt;timestamp&gt;/</code> holding the port, container
+        name and image reference. Nothing is edited in place, so a release is a self-describing record
+        that later scripts can act on without shared state.</p>
+    </div>
+    <div class="card">
+      <h3>The <code>current</code> symlink is the source of truth</h3>
+      <p><code>ln -sfn</code> replaces the symlink in a single filesystem operation &mdash; there is no
+        moment where <code>current</code> points at nothing. Any script, or any operator, can read it to
+        learn which release is live.</p>
+    </div>
+    <div class="card">
+      <h3>Previous releases are retained</h3>
+      <p><code>cleanup.sh</code> keeps the three most recent releases. The prior release's directory and
+        metadata survive the switch, so a known-good version is always documented and ready to be
+        brought back without a rebuild.</p>
+    </div>
+  </div>
+
+  <div class="grid2" style="align-items:start">
+    <div>
+      <h3 style="margin-bottom:5pt">On-disk layout</h3>
+      <div class="tree">
+~/apps/sample-api/<br>
+&nbsp;├─ <b>releases/</b><br>
+&nbsp;│&nbsp;&nbsp;├─ 20260731-101204/&nbsp;&nbsp;<span style="color:#94a3b8">retained</span><br>
+&nbsp;│&nbsp;&nbsp;├─ 20260803-084417/&nbsp;&nbsp;<span style="color:#94a3b8">rollback target</span><br>
+&nbsp;│&nbsp;&nbsp;└─ 20260811-131955/&nbsp;&nbsp;<span class="cur">live</span><br>
+&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ .port &nbsp;&nbsp;&nbsp;<span style="color:#94a3b8">48211</span><br>
+&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ .container <span style="color:#94a3b8">sample-api_20260811-131955</span><br>
+&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ .image &nbsp;&nbsp;<span style="color:#94a3b8">ghcr.io/…:sha-f06d7cc</span><br>
+&nbsp;├─ <span class="cur">current &rarr; releases/20260811-131955</span><br>
+&nbsp;└─ scripts/
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:5pt">Rollback approach</h3>
+      <ul style="margin-top:0">
+        <li>Run <code>rollback.sh</code> on the server &mdash; one command, no rebuild, no pipeline run</li>
+        <li>It reads <code>current</code> to find the live release, then takes the release before it</li>
+        <li>That release's stopped container is started again; if it is gone or its port is taken,
+          it is recreated from the release's recorded image on a free port</li>
+        <li>The <em>same</em> health check must pass on the previous release before traffic moves back</li>
+        <li>The Nginx upstream is rewritten, validated with <code>nginx -t</code> and reloaded</li>
+        <li><code>current</code> is repointed to the previous release</li>
+        <li>After a drain period, the faulty container and its release directory are removed, so the
+          bad version cannot be restarted by accident</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:9pt">
+    <h3>Stated honestly</h3>
+    <p>This is not a claim of guaranteed zero downtime. The design goal is
+      <strong>repeatable releases with controlled traffic switching and rollback support</strong>:
+      no version receives traffic until it answers a health check, the switch is a validated Nginx
+      reload rather than a stop-then-start, the old container gets a drain period before it stops,
+      and a verified previous release stays on disk. Actual downtime depends on the application's own
+      shutdown behaviour; <code>measure-downtime.sh</code> measures it from the client side during a real switch.</p>
+  </div>
+
+  <div class="foot"><span>DeployFlow &mdash; Case Study</span><span>Page 4</span></div>
+</section>
+
+<!-- ============ PAGE 6 — RESULT ============ -->
+<section class="page page-flex" style="display:flex;flex-direction:column">
+  <div class="phead"><h2>Result</h2><div class="n">05 &mdash; What the workflow achieves</div></div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v">Push&nbsp;&rarr;&nbsp;live</div><div class="l">Fully automated: build, test, publish, deploy, verify &mdash; no manual server steps</div></div>
+    <div class="kpi"><div class="v">Commit&#8209;traceable</div><div class="l">Every running container maps to an exact SHA, checkable via <code>/version</code></div></div>
+    <div class="kpi"><div class="v">Gated</div><div class="l">Traffic switches only after a <code>200 OK</code> health check on the new version</div></div>
+    <div class="kpi"><div class="v">Reversible</div><div class="l">One command restores the previous release, health-checked before the switch</div></div>
+    <div class="kpi"><div class="v">Self&#8209;limiting</div><div class="l">Release history trimmed to 3 and dangling images pruned each deploy</div></div>
+    <div class="kpi"><div class="v">No&nbsp;orchestrator</div><div class="l">One Ubuntu VM, Docker and Nginx &mdash; no control plane, no added cost</div></div>
+  </div>
+
+  <div class="ba">
+    <div class="before">
+      <h3>Typical manual setup</h3>
+      <ul>
+        <li class="x">Hand-typed SSH commands, remembered not recorded</li>
+        <li class="x">Images built on the production server</li>
+        <li class="x">No answer to &ldquo;which commit is live?&rdquo;</li>
+        <li class="x">Old container stopped before the new one is proven</li>
+        <li class="x">A bad build becomes a live outage</li>
+        <li class="x">Recovery means rebuilding under pressure</li>
+      </ul>
+    </div>
+    <div class="after">
+      <h3>With DeployFlow</h3>
+      <ul>
+        <li>A push to <code>main</code> is the whole procedure</li>
+        <li>Immutable, SHA-tagged images pulled from GHCR</li>
+        <li><code>/version</code> and <code>current</code> both answer it</li>
+        <li>Candidate proves itself before traffic moves</li>
+        <li>A bad build fails the pipeline, not production</li>
+        <li>Previous release stays on disk, ready to restore</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:11pt;margin-bottom:5pt">Transferable to any containerised service</h3>
+  <table>
+    <tr><th style="width:30%">Component</th><th>What it is worth on the next project</th></tr>
+    <tr><td>CI pipeline</td><td>Same shape for any language &mdash; only the build and test steps change.</td></tr>
+    <tr><td>Deploy orchestrator</td><td>Release-directory + candidate-container pattern needs only a readiness endpoint and a port.</td></tr>
+    <tr><td>Traffic switching</td><td>A generated, validated Nginx upstream include &mdash; portable to any service behind a proxy.</td></tr>
+    <tr><td>Rollback &amp; retention</td><td>Retained releases with recorded metadata give a scripted way back, with no rebuild.</td></tr>
+    <tr><td>Secrets handling</td><td>Key-based SSH and run-time registry tokens &mdash; no long-lived credentials on the host.</td></tr>
+  </table>
+
+  <h3 style="margin-top:10pt;margin-bottom:5pt">Where this goes next</h3>
+  <ul style="columns:2;column-gap:8mm">
+    <li>Automatic rollback on post-switch error-rate checks</li>
+    <li>Switch downtime measured under sustained load and published</li>
+  </ul>
+
+  <div class="cta">
+    <h3>About this case study</h3>
+    <p>A personal project, built solo as a working reference implementation, not a diagram &mdash; every mechanism described here
+      exists as committed workflow YAML and Bash on the server.<br>
+      <span class="m">Live: https://deployflow.inventstarts.com/version &middot; Source: github.com/Asharkhalid/deployflow</span></p>
+  </div>
+
+  <div class="foot"><span>DeployFlow &mdash; Case Study</span><span>Page 5</span></div>
+</section>
+
+</body>
+</html>

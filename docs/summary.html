@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DeployFlow Summary</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+    --line:#e2e8f0; --line-2:#cbd5e1;
+    --accent:#0d7d8c; --accent-dk:#0a5a66; --accent-bg:#eef8f9;
+    --navy:#12243d; --red:#c2410c;
+    --mono:"Consolas","SF Mono",Menlo,monospace;
+    --sans:"Segoe UI",Inter,-apple-system,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{size:A4;margin:0}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:var(--sans);color:var(--ink);font-size:10pt;line-height:1.5;background:#fff}
+  .page{width:210mm;height:297mm;padding:0;overflow:hidden;display:flex;flex-direction:column}
+  header{background:var(--navy);color:#fff;padding:13mm 16mm 10mm}
+  .kicker{font-size:7.8pt;letter-spacing:.16em;text-transform:uppercase;color:#5fd0dd;font-weight:700}
+  h1{font-size:21pt;line-height:1.15;letter-spacing:-.4px;margin-top:3mm}
+  .sub{color:#a7bdd6;font-size:10.5pt;margin-top:3mm;line-height:1.5}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;margin-top:6mm}
+  .chip{border:1px solid #35507a;background:#182f4d;border-radius:4px;padding:3pt 7pt;
+        font-size:8.6pt;font-weight:600;color:#dce8f7;white-space:nowrap}
+  .chip.on{background:var(--accent);border-color:#12a3b5;color:#fff}
+  .sep{color:#4a6b9a;padding:0 4pt}
+  main{padding:8mm 16mm 0;flex:1;display:flex;flex-direction:column}
+  h2{font-size:9pt;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:2.5mm}
+  section{margin-bottom:6mm}
+  p{color:var(--ink-2);font-size:9.8pt}
+  ul{list-style:none}
+  li{position:relative;padding-left:12pt;margin-bottom:3pt;font-size:9.6pt;color:var(--ink-2)}
+  li:before{content:"";position:absolute;left:1pt;top:6pt;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+  li.x:before{background:var(--red)}
+  code{white-space:nowrap;font-family:var(--mono);font-size:8.8pt;background:#f1f5f9;padding:1px 4px;border-radius:3px;color:var(--accent-dk)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+  .card{border:1px solid var(--line);border-radius:6px;padding:8pt 10pt;background:#fcfdfe}
+  .card h3{font-size:10pt;color:var(--navy);margin-bottom:3pt}
+  .card p{font-size:9.3pt;margin:0}
+  .ba{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .ba>div{padding:8pt 11pt}
+  .ba .before{background:#fbfbfc;border-right:1px solid var(--line)}
+  .ba h3{font-size:8.4pt;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5pt}
+  .ba .before h3{color:#9a3412}
+  .ba .after h3{color:var(--accent)}
+  .ba li{font-size:9.2pt}
+  footer{margin-top:auto;border-top:1px solid var(--line);padding:5mm 16mm 7mm;
+         display:flex;justify-content:space-between;font-size:8.6pt;color:var(--ink-3)}
+  footer b{color:var(--navy)}
+  footer .m{font-family:var(--mono);color:var(--accent-dk)}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="kicker">DevOps case study &middot; Personal reference implementation, built solo</div>
+    <h1>DeployFlow: Blue-Green Deployment for ASP.NET Core on a Single VPS</h1>
+    <div class="sub">For small teams running a .NET API on one server who release by hand over SSH
+      and hope nothing breaks. A push to <b style="color:#fff">main</b> becomes a tested, health-checked
+      release with a one-command way back &mdash; no Kubernetes, no extra services.</div>
+    <div class="flow">
+      <span class="chip">git push</span><span class="sep">&rarr;</span>
+      <span class="chip">GitHub Actions</span><span class="sep">&rarr;</span>
+      <span class="chip">GHCR image</span><span class="sep">&rarr;</span>
+      <span class="chip">Candidate container</span><span class="sep">&rarr;</span>
+      <span class="chip on">Health check</span><span class="sep">&rarr;</span>
+      <span class="chip">Nginx switch</span>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>The problem</h2>
+      <ul>
+        <li class="x">Releases are hand-typed SSH commands that live in one person's head</li>
+        <li class="x">The old container is stopped before the new one has proven it works, so a bad build becomes an outage</li>
+        <li class="x">Nothing links the running container to a commit, and there's no quick way back</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+      <div class="grid2">
+        <div class="card"><h3>Build once, deploy the artefact</h3>
+          <p>GitHub Actions builds and tests the API, then pushes a Docker image tagged with the commit SHA
+            to GHCR. Nothing is built on the server.</p></div>
+        <div class="card"><h3>New version proves itself first</h3>
+          <p>The server starts the new image beside the live one, on a loopback-only port, and polls
+            <code>/health</code>. Only a <code>200 OK</code> lets the release continue.</p></div>
+        <div class="card"><h3>Controlled traffic switch</h3>
+          <p>Nginx config is regenerated, validated with <code>nginx -t</code> and gracefully reloaded.
+            The old container drains, then stops but is kept for rollback.</p></div>
+        <div class="card"><h3>Failure and rollback</h3>
+          <p>A failed health check removes the candidate and fails the pipeline &mdash; the live site keeps serving.
+            <code>rollback.sh</code> restarts the previous release, re-checks it and switches back.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Typical manual setup vs. DeployFlow</h2>
+      <div class="ba">
+        <div class="before">
+          <h3>Typical manual setup</h3>
+          <ul>
+            <li class="x">Hand-typed SSH commands</li>
+            <li class="x">Images built on the production server</li>
+            <li class="x">No answer to &ldquo;which commit is live?&rdquo;</li>
+            <li class="x">A bad build becomes a live outage</li>
+            <li class="x">Recovery means rebuilding under pressure</li>
+          </ul>
+        </div>
+        <div class="after">
+          <h3>With DeployFlow</h3>
+          <ul>
+            <li>A push to <code>main</code> is the whole procedure</li>
+            <li>Immutable, SHA-tagged images from GHCR</li>
+            <li><code>/version</code> shows the live commit</li>
+            <li>A bad build fails the pipeline, not the site</li>
+            <li>One command restores the previous release</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Measured results: add real numbers from scripts/measure-downtime.sh here, e.g.
+    <section>
+      <h2>Measured</h2>
+      <ul>
+        <li>N failed requests out of M during a live switch</li>
+        <li>Push-to-live time: X min</li>
+      </ul>
+    </section>
+    -->
+
+    <section>
+      <h2>Stack</h2>
+      <p>ASP.NET Core 8 &middot; Docker (multi-stage, non-root, Alpine) &middot; GitHub Actions &middot; GHCR
+        &middot; Nginx with Let's Encrypt TLS &middot; Bash &middot; Ubuntu</p>
+    </section>
+  </main>
+
+  <footer>
+    <span><b>Live:</b> <a class="m" href="https://deployflow.inventstarts.com/version">deployflow.inventstarts.com/version</a> &nbsp;&middot;&nbsp; <b>Source:</b> <a class="m" href="https://github.com/Asharkhalid/deployflow">github.com/Asharkhalid/deployflow</a></span>
+    <span><a class="m" href="https://github.com/Asharkhalid/deployflow/blob/main/DeployFlow-Case-Study.pdf">Full case study</a></span>
+  </footer>
+</div>
+</body>
+</html>

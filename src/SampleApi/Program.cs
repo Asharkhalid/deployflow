@@ -40,7 +40,7 @@ app.MapGet("/environment", () => new {
 });
 
 app.MapGet("/uptime", () => new {
-    Uptime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString("g")
+    Uptime = (DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).ToString(@"d\.hh\:mm\:ss")
 });
 
 app.Run();
