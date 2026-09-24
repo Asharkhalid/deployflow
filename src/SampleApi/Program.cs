@@ -17,7 +17,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapHealthChecks("/health");
+// app.MapHealthChecks("/health");
+app.MapGet("/health", () => Results.StatusCode(503)); // demo: simulate a bad build
+
 
 app.MapGet("/", () => new {
     Application = "DeployFlow Demo",
